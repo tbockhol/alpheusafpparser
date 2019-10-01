@@ -28,6 +28,9 @@ import com.mgz.afp.exceptions.AFPParserException;
 import com.mgz.afp.foca.CPC_CodePageControl;
 import com.mgz.afp.foca.CPD_CodePageDescriptor;
 import com.mgz.afp.foca.FNC_FontControl;
+import com.mgz.afp.ioca.ImageObject;
+import com.mgz.afp.modca.BIM_BeginImageObject;
+import com.mgz.afp.modca.EIM_EndImageObject;
 import com.mgz.util.Constants;
 import com.mgz.util.UtilBinaryDecoding;
 
@@ -273,6 +276,11 @@ public class AFPParser {
             parserConf.setCurrentPageControl((CPC_CodePageControl) sf);
           } else if (sf instanceof BDD_BarCodeDataDescriptor) {
             parserConf.setCurrentBarCodeDataDescriptor((BDD_BarCodeDataDescriptor) sf);
+          } else if (sf instanceof BIM_BeginImageObject) {
+            // ImageSegment may be carried by 1 or more ImagePictureData
+            parserConf.setCurrentImageObject(new ImageObject());
+          } else if (sf instanceof EIM_EndImageObject) {
+            parserConf.getCurrentImageObject().setComplete(true);
           }
 
           nrOfBytesRead += sf.getStructuredFieldIntroducer().getSFLength();

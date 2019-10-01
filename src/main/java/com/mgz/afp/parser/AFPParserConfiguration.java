@@ -25,6 +25,7 @@ import com.mgz.afp.bcoca.BDD_BarCodeDataDescriptor;
 import com.mgz.afp.foca.CPC_CodePageControl;
 import com.mgz.afp.foca.CPD_CodePageDescriptor;
 import com.mgz.afp.foca.FNC_FontControl;
+import com.mgz.afp.ioca.ImageObject;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -49,6 +50,7 @@ public class AFPParserConfiguration implements Serializable, Cloneable {
   private CPC_CodePageControl currentPageControl;
   private FNC_FontControl currentFontControl;
   private BDD_BarCodeDataDescriptor currentBarCodeDataDescriptor;
+  private ImageObject currentImageObject;
 
   /**
    * Returns the {@link Charset} used to decode text contained in the AFP data stream (e.g.
@@ -227,6 +229,14 @@ public class AFPParserConfiguration implements Serializable, Cloneable {
 
   public void setCurrentPageControl(CPC_CodePageControl currentPageControl) {
     this.currentPageControl = currentPageControl;
+  }
+
+  public ImageObject getCurrentImageObject() {
+    return currentImageObject;
+  }
+
+  public void setCurrentImageObject(ImageObject currentImageObject) {
+    this.currentImageObject = currentImageObject;
   }
 
   public File getAFPFile() {
