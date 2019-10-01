@@ -358,6 +358,8 @@ abstract class IPD_Segment implements IAFPDecodeableWriteable {
       yUnitsPerUnitBase = UtilBinaryDecoding.parseShort(sfData, offset + 5, 2);
       xImageSize = UtilBinaryDecoding.parseShort(sfData, offset + 7, 2);
       yImageSize = UtilBinaryDecoding.parseShort(sfData, offset + 9, 2);
+
+      config.getCurrentImageObject().setImageSize(unitBase, xUnitsPerUnitBase, yUnitsPerUnitBase, xImageSize, yImageSize);
     }
 
 
@@ -387,6 +389,9 @@ abstract class IPD_Segment implements IAFPDecodeableWriteable {
       if (lengthOfFollowingData > 2) {
         bitOrder = IPD_BitOrder.valueOf(UtilBinaryDecoding.parseShort(sfData, offset + 4, 1));
       }
+
+      config.getCurrentImageObject().setImageEncoding(compressionAlgorithm, recordingAlgorithm, bitOrder);
+
     }
 
 
@@ -415,6 +420,8 @@ abstract class IPD_Segment implements IAFPDecodeableWriteable {
       segmentType = IPD_SegmentType.valueOf(UtilBinaryDecoding.parseShort(sfData, offset, 1));
       lengthOfFollowingData = UtilBinaryDecoding.parseShort(sfData, offset + 1, 1);
       numberOfBitsInEachIDE = UtilBinaryDecoding.parseShort(sfData, offset + 2, 1);
+
+      config.getCurrentImageObject().setImageElementSize(numberOfBitsInEachIDE);
     }
 
 
@@ -1343,11 +1350,56 @@ abstract class IPD_Segment implements IAFPDecodeableWriteable {
     @Override
     public void decodeAFP(byte[] sfData, int offset, int length, AFPParserConfiguration config) throws AFPParserException {
       segmentType = IPD_SegmentType.valueOf(UtilBinaryDecoding.parseInt(sfData, offset, 2));
-      lengthOfFollowingData = UtilBinaryDecoding.parseShort(sfData, offset + 2, 2);
-      imageData = new byte[lengthOfFollowingData];
-      System.arraycopy(sfData, offset + 4, imageData, 0, imageData.length);
-    }
 
+      if (config.getCurrentImageObject().getRemainingBytes() != 0 ) {
+        lengthOfFollowingData = config.getCurrentImageObject().getRemainingBytes();
+        // assume we get all remaining bytes next turn, should actually be only what we couldn't read this turn
+        config.getCurrentImageObject().setRemainingBytes(0);
+      } else {
+        lengthOfFollowingData = UtilBinaryDecoding.parseShort(sfData, offset + 2, 2);
+      }
+
+      // read all we can, set remaining bytes left to current ImagePictureData
+      if (offset+4 + lengthOfFollowingData > sfData.length) {
+          config.getCurrentImageObject().setRemainingBytes(lengthOfFollowingData - (sfData.length - (offset+4)));
+          lengthOfFollowingData = sfData.length - (offset+4);
+      }
+
+      imageData = new byte[lengthOfFollowingData];
+
+      System.arraycopy(sfData, offset + 4, imageData, 0, imageData.length);
+      config.getCurrentImageObject().addImageData(imageData);
+    }
+    @Override
+    public void writeAFP(OutputStream os, AFPParserConfiguration config) throws IOException {
+      lengthOfFollowingData = imageData.length;
+      os.write(segmentType.toBytes());
+      os.write(UtilBinaryDecoding.intToByteArray(lengthOfFollowingData, 2));
+      os.write(imageData);
+    }
+  }
+
+  public static class UnknownImageData extends IPD_Segment.IPD_SegmentExtended {
+    byte[] imageData;
+
+    @Override
+    public void decodeAFP(byte[] sfData, int offset, int length, AFPParserConfiguration config) throws AFPParserException {
+
+      lengthOfFollowingData = config.getCurrentImageObject().getRemainingBytes();
+      // assume we get all remaining bytes next turn, should actually be only what we couldn't read this turn
+      config.getCurrentImageObject().setRemainingBytes(0);
+
+      // read all we can, set remaining bytes left to current ImagePictureData
+      if (offset + lengthOfFollowingData > sfData.length) {
+          config.getCurrentImageObject().setRemainingBytes(lengthOfFollowingData - (sfData.length - (offset)));
+          lengthOfFollowingData = sfData.length - (offset);
+      }
+
+      imageData = new byte[lengthOfFollowingData];
+
+      System.arraycopy(sfData, offset, imageData, 0, imageData.length);
+      config.getCurrentImageObject().addImageData(imageData);
+    }
 
     @Override
     public void writeAFP(OutputStream os, AFPParserConfiguration config) throws IOException {

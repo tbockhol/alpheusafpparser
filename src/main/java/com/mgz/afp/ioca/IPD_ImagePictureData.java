@@ -137,7 +137,13 @@ public class IPD_ImagePictureData extends StructuredField {
         }
         break;
         case UnknownIPDSegmentLong: {
-          ipdSegment = new UnknownSegmentLong();
+          if (config.getCurrentImageObject() != null && !config.getCurrentImageObject().isComplete()
+            && config.getCurrentImageObject().getRemainingBytes() > 0) {
+            // maybe continued ImageData
+            ipdSegment = new UnknownImageData();
+          } else {
+            ipdSegment = new UnknownSegmentLong();
+          }
         }
         break;
         case UnknownIPDSegmentExtended: {
