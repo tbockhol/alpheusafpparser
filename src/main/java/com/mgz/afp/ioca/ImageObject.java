@@ -23,6 +23,10 @@ public class ImageObject {
   short yUnitsPerUnitBase;
   short xImageSize;
   short yImageSize;
+  int xOrigin;
+  int yOrigin;
+
+  int[] color;
   
   short imageElementSize;
   
@@ -42,6 +46,15 @@ public class ImageObject {
   }
   public void setRemainingBytes(int remainingBytes) {
     this.remainingBytes = remainingBytes;
+  }
+
+  public void setOffset(int x, int y) {
+    this.xOrigin = x;
+    this.yOrigin = y;
+  }
+
+  public void setBilevelColor(int[] rgb) {
+    this.color = rgb;
   }
   
   public void setImageSize(AFPUnitBase unitBase, short xUnitsPerUnitBase, short yUnitsPerUnitBase, short xImageSize, short yImageSize) {
@@ -136,5 +149,25 @@ public class ImageObject {
     bits[7] = (byte) (((~b & 0x01) == 0) ? '0' : '1'); 
     
     return bits;
+  }
+
+  public int getXOrigin() {
+    return this.xOrigin;
+  }
+  
+  public int getYOrigin() {
+    return this.yOrigin;
+  }
+  
+  public short getHeight() {
+    return this.yImageSize;
+  }
+  
+  public short getWidth() {
+    return this.xImageSize;
+  }
+  
+  public int[] getColor() {
+    return this.color;
   }
 }
